@@ -1,6 +1,5 @@
-import { IsString, IsNumber, IsEnum, IsOptional, Min, MinLength } from 'class-validator';
+import { IsString, IsNumber, IsOptional, Min, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ProductCategory } from '../entities/product.entity';
 
 export class CreateProductDto {
   @ApiProperty({ example: 'Laptop HP Pavilion' })
@@ -13,17 +12,22 @@ export class CreateProductDto {
   @MinLength(10)
   description: string;
 
-  @ApiProperty({ example: 1299.99 })
+  @ApiProperty({ example: 1000.00, description: 'Precio de compra' })
   @IsNumber()
   @Min(0)
-  price: number;
+  purchasePrice: number;
+
+  @ApiProperty({ example: 1299.99, description: 'Precio de venta' })
+  @IsNumber()
+  @Min(0)
+  salePrice: number;
 
   @ApiProperty({ example: 50 })
   @IsNumber()
   @Min(0)
   stock: number;
 
-  @ApiProperty({ enum: ProductCategory, example: ProductCategory.ELECTRONICS })
-  @IsEnum(ProductCategory)
-  category: ProductCategory;
+  @ApiProperty({ example: 'uuid-de-categoria', description: 'ID de la categoría' })
+  @IsString()
+  categoryId: string;
 }

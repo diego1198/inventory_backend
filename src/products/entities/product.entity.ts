@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { SaleItem } from '../../sales/entities/sale-item.entity';
+import { Category } from '../../categories/categories.entity';
 
 export enum ProductCategory {
   ELECTRONICS = 'electronics',
@@ -21,17 +22,17 @@ export class Product {
   description: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
-  price: number;
+  purchasePrice: number;
+
+  @Column('decimal', { precision: 10, scale: 2 })
+  salePrice: number;
 
   @Column('int')
   stock: number;
 
-  @Column({
-    type: 'enum',
-    enum: ProductCategory,
-    default: ProductCategory.OTHER,
-  })
-  category: ProductCategory;
+  @ManyToOne(() => Category, category => category.products, { nullable: false })
+  @JoinColumn({ name: 'categoryId' })
+  category: Category;
 
   @Column({ default: true })
   isActive: boolean;

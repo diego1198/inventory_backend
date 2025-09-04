@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Product, ProductCategory } from './entities/product.entity';
+import { Product } from './entities/product.entity';
+import { Category } from '../categories/categories.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
@@ -13,7 +14,13 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const product = this.productsRepository.create(createProductDto);
+    // Buscar la categoría por ID y asociarla al producto
+    const { categoryId, ...rest } = createProductDto;
+    const category = await this.productsRepository.manager.findOne(Category, { where: { id: categoryId } });
+    if (!category) {
+      throw new BadRequestException('Categoría no encontrada');
+    }
+    const product = this.productsRepository.create({ ...rest, category });
     return this.productsRepository.save(product);
   }
 
@@ -37,8 +44,13 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+    const { categoryId, ...rest } = updateProductDto;
+    const category = await this.productsRepository.manager.findOne(Category, { where: { id: categoryId } });
+    if (!category) {
+      throw new BadRequestException('Categoría no encontrada');
+    }
     const product = await this.findOne(id);
-    Object.assign(product, updateProductDto);
+    Object.assign(product, { ...rest, category });
     return this.productsRepository.save(product);
   }
 
@@ -62,9 +74,11 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-  async findByCategory(category: ProductCategory): Promise<Product[]> {
+  async findByCategory(categoryId: string): Promise<Product[]> {
+    // Buscar productos por el id de la categoría (entidad)
     return this.productsRepository.find({
-      where: { category, isActive: true },
+      where: { category: { id: categoryId }, isActive: true },
+      relations: ['category'],
       order: { name: 'ASC' },
     });
   }

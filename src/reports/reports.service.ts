@@ -35,6 +35,16 @@ export class ReportsService {
     const totalRevenue = sales.reduce((sum, sale) => sum + Number(sale.total), 0);
     const totalTax = sales.reduce((sum, sale) => sum + Number(sale.tax), 0);
 
+    // Calcular total de ganancia
+    let totalProfit = 0;
+    sales.forEach(sale => {
+      sale.items.forEach(item => {
+        if (item.product) {
+          totalProfit += (Number(item.unitPrice) - Number(item.product.purchasePrice)) * item.quantity;
+        }
+      });
+    });
+
     // Productos más vendidos del día
     const productSales = new Map<string, { name: string; quantity: number; revenue: number }>();
     
@@ -65,6 +75,7 @@ export class ReportsService {
       totalSales,
       totalRevenue,
       totalTax,
+      totalProfit,
       topProducts,
       sales: sales.map(sale => ({
         id: sale.id,
@@ -90,6 +101,16 @@ export class ReportsService {
     const totalSales = sales.length;
     const totalRevenue = sales.reduce((sum, sale) => sum + Number(sale.total), 0);
     const totalTax = sales.reduce((sum, sale) => sum + Number(sale.tax), 0);
+
+    // Calcular total de ganancia
+    let totalProfit = 0;
+    sales.forEach(sale => {
+      sale.items.forEach(item => {
+        if (item.product) {
+          totalProfit += (Number(item.unitPrice) - Number(item.product.purchasePrice)) * item.quantity;
+        }
+      });
+    });
 
     // Ventas por día del mes
     const dailySales = new Map<number, { sales: number; revenue: number }>();
@@ -137,6 +158,7 @@ export class ReportsService {
       totalSales,
       totalRevenue,
       totalTax,
+      totalProfit,
       dailySales: Array.from(dailySales.entries()).map(([day, data]) => ({
         day,
         ...data,
@@ -154,7 +176,7 @@ export class ReportsService {
     const lowStockProducts = products.filter(product => product.stock < 10);
     const outOfStockProducts = products.filter(product => product.stock === 0);
     const totalProducts = products.length;
-    const totalValue = products.reduce((sum, product) => sum + (product.stock * Number(product.price)), 0);
+    const totalValue = products.reduce((sum, product) => sum + (product.stock * Number(product.salePrice)), 0);
 
     return {
       totalProducts,
@@ -163,12 +185,12 @@ export class ReportsService {
         id: product.id,
         name: product.name,
         stock: product.stock,
-        price: product.price,
+        salePrice: product.salePrice,
       })),
       outOfStockProducts: outOfStockProducts.map(product => ({
         id: product.id,
         name: product.name,
-        price: product.price,
+        salePrice: product.salePrice,
       })),
       productsByCategory: this.groupProductsByCategory(products),
     };
@@ -178,18 +200,16 @@ export class ReportsService {
     const grouped = new Map<string, { count: number; value: number }>();
     
     products.forEach(product => {
-      const category = product.category;
-      const existing = grouped.get(category) || { count: 0, value: 0 };
-      
+      const categoryName = product.category?.name || 'Sin categoría';
+      const existing = grouped.get(categoryName) || { count: 0, value: 0 };
       existing.count += 1;
-      existing.value += product.stock * Number(product.price);
-      
-      grouped.set(category, existing);
+      existing.value += product.stock * Number(product.salePrice);
+      grouped.set(categoryName, existing);
     });
 
     return Array.from(grouped.entries()).map(([category, data]) => ({
       category,
       ...data,
     }));
-  }
+}
 }

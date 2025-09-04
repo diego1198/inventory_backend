@@ -53,8 +53,8 @@ export class SalesService {
         const saleItem = this.saleItemsRepository.create({
           productId: item.productId,
           quantity: item.quantity,
-          unitPrice: product.price,
-          total: product.price * item.quantity,
+          unitPrice: product.salePrice,
+          total: product.salePrice * item.quantity,
         });
 
         saleItems.push(saleItem);
