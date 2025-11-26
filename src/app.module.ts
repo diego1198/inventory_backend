@@ -7,6 +7,7 @@ import { ProductsModule } from './products/products.module';
 import { SalesModule } from './sales/sales.module';
 import { ReportsModule } from './reports/reports.module';
 import { CategoriesModule } from './categories/categories.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
   imports: [
@@ -24,12 +25,13 @@ import { CategoriesModule } from './categories/categories.module';
       synchronize: process.env.NODE_ENV === 'development',
       logging: process.env.NODE_ENV === 'development',
     }),
-  AuthModule,
-  UsersModule,
-  ProductsModule,
-  SalesModule,
-  ReportsModule,
-  CategoriesModule,
+    AuthModule,
+    UsersModule,
+    ProductsModule,
+    SalesModule,
+    ReportsModule,
+    CategoriesModule,
+    InventoryModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

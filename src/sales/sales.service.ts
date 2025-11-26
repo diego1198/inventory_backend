@@ -17,7 +17,7 @@ export class SalesService {
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async create(createSaleDto: CreateSaleDto, userId: string): Promise<Sale> {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -54,6 +54,7 @@ export class SalesService {
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: product.salePrice,
+          purchasePrice: product.purchasePrice,
           total: product.salePrice * item.quantity,
         });
 
@@ -143,9 +144,9 @@ export class SalesService {
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
-    
+
     const baseNumber = `F${year}${month}${day}`;
-    
+
     const lastSale = await this.salesRepository.findOne({
       where: { invoiceNumber: Like(`${baseNumber}%`) },
       order: { invoiceNumber: 'DESC' },
@@ -157,7 +158,7 @@ export class SalesService {
 
     const lastNumber = parseInt(lastSale.invoiceNumber.slice(-3));
     const newNumber = lastNumber + 1;
-    
+
     return `${baseNumber}${String(newNumber).padStart(3, '0')}`;
   }
 }

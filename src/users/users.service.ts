@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
@@ -11,9 +11,37 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-  ) {}
+  ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  /**
+   * Validates if a user with a given role can create a user with a target role
+   */
+  private canCreateRole(creatorRole: UserRole, targetRole: UserRole): boolean {
+    // SUPERADMIN can create any role
+    if (creatorRole === UserRole.SUPERADMIN) {
+      return true;
+    }
+
+    // ADMIN can only create CASHIER
+    if (creatorRole === UserRole.ADMIN && targetRole === UserRole.CASHIER) {
+      return true;
+    }
+
+    // CASHIER cannot create any users
+    return false;
+  }
+
+  async create(createUserDto: CreateUserDto, creatorRole?: UserRole): Promise<User> {
+    // Validate permissions if creatorRole is provided
+    if (creatorRole) {
+      const targetRole = createUserDto.role || UserRole.CASHIER;
+      if (!this.canCreateRole(creatorRole, targetRole)) {
+        throw new ForbiddenException(
+          `El rol ${creatorRole} no tiene permisos para crear usuarios con rol ${targetRole}`
+        );
+      }
+    }
+
     const existingUser = await this.usersRepository.findOne({
       where: { email: createUserDto.email },
     });
@@ -23,7 +51,7 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    
+
     const user = this.usersRepository.create({
       ...createUserDto,
       password: hashedPassword,
@@ -57,7 +85,7 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
-    
+
     if (updateUserDto.email && updateUserDto.email !== user.email) {
       const existingUser = await this.usersRepository.findOne({
         where: { email: updateUserDto.email },

@@ -9,7 +9,7 @@ export class CreateProductDto {
 
   @ApiProperty({ example: 'Laptop de alta calidad con procesador Intel i7' })
   @IsString()
-  @MinLength(10)
+  @MinLength(5)
   description: string;
 
   @ApiProperty({ example: 1000.00, description: 'Precio de compra' })

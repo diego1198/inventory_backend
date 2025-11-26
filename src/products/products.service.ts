@@ -11,7 +11,7 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
-  ) {}
+  ) { }
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
     // Buscar la categoría por ID y asociarla al producto
@@ -27,6 +27,7 @@ export class ProductsService {
   async findAll(): Promise<Product[]> {
     return this.productsRepository.find({
       where: { isActive: true },
+      relations: ['category'],
       order: { name: 'ASC' },
     });
   }
@@ -34,6 +35,7 @@ export class ProductsService {
   async findOne(id: string): Promise<Product> {
     const product = await this.productsRepository.findOne({
       where: { id, isActive: true },
+      relations: ['category'],
     });
 
     if (!product) {
@@ -62,13 +64,13 @@ export class ProductsService {
 
   async updateStock(id: string, quantity: number, operation: 'add' | 'subtract'): Promise<Product> {
     const product = await this.findOne(id);
-    
+
     if (operation === 'subtract' && product.stock < quantity) {
       throw new BadRequestException('Stock insuficiente');
     }
 
-    product.stock = operation === 'add' 
-      ? product.stock + quantity 
+    product.stock = operation === 'add'
+      ? product.stock + quantity
       : product.stock - quantity;
 
     return this.productsRepository.save(product);

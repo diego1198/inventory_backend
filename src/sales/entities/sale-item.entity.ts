@@ -13,6 +13,9 @@ export class SaleItem {
   @Column('decimal', { precision: 10, scale: 2 })
   unitPrice: number;
 
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  purchasePrice: number; // Cost price at the time of sale
+
   @Column('decimal', { precision: 10, scale: 2 })
   total: number;
 
