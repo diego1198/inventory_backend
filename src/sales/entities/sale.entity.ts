@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { SaleItem } from './sale-item.entity';
+import { Customer } from '../../customers/entities/customer.entity';
 
 export enum SaleStatus {
   PENDING = 'pending',
@@ -41,6 +42,13 @@ export class Sale {
 
   @Column()
   userId: string;
+
+  @ManyToOne(() => Customer, customer => customer.sales, { nullable: true })
+  @JoinColumn({ name: 'customerId' })
+  customer: Customer;
+
+  @Column({ nullable: true })
+  customerId: string;
 
   @OneToMany(() => SaleItem, saleItem => saleItem.sale, { cascade: true })
   items: SaleItem[];

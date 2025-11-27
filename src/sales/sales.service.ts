@@ -75,6 +75,7 @@ export class SalesService {
         tax,
         total,
         userId,
+        customerId: createSaleDto.customerId,
         status: SaleStatus.COMPLETED,
         notes: createSaleDto.notes,
       });
@@ -101,7 +102,7 @@ export class SalesService {
 
   async findAll(): Promise<Sale[]> {
     return this.salesRepository.find({
-      relations: ['user', 'items', 'items.product'],
+      relations: ['user', 'items', 'items.product', 'customer'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -109,7 +110,7 @@ export class SalesService {
   async findOne(id: string): Promise<Sale> {
     const sale = await this.salesRepository.findOne({
       where: { id },
-      relations: ['user', 'items', 'items.product'],
+      relations: ['user', 'items', 'items.product', 'customer'],
     });
 
     if (!sale) {
@@ -122,7 +123,7 @@ export class SalesService {
   async findByUser(userId: string): Promise<Sale[]> {
     return this.salesRepository.find({
       where: { userId },
-      relations: ['items', 'items.product'],
+      relations: ['items', 'items.product', 'customer'],
       order: { createdAt: 'DESC' },
     });
   }

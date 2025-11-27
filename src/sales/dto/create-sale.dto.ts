@@ -25,4 +25,9 @@ export class CreateSaleDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiProperty({ example: 'customer-id-here', required: false })
+  @IsString()
+  @IsOptional()
+  customerId?: string;
 }

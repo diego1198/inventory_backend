@@ -30,6 +30,12 @@ export class Product {
   @Column('int')
   stock: number;
 
+  @Column({ nullable: true })
+  code: string;
+
+  @Column({ nullable: true })
+  brand: string;
+
   @ManyToOne(() => Category, category => category.products, { nullable: false })
   @JoinColumn({ name: 'categoryId' })
   category: Category;
