@@ -36,6 +36,21 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
+  @Get('alerts/low-stock')
+  @ApiOperation({ summary: 'Obtener alertas de stock bajo' })
+  @ApiResponse({ status: 200, description: 'Alertas de stock obtenidas' })
+  getLowStockAlerts() {
+    return this.productsService.getLowStockAlerts();
+  }
+
+  @Get('by-code/:code')
+  @ApiOperation({ summary: 'Obtener un producto por código de barras' })
+  @ApiResponse({ status: 200, description: 'Producto encontrado' })
+  @ApiResponse({ status: 404, description: 'Producto no encontrado' })
+  findByCode(@Param('code') code: string) {
+    return this.productsService.findByCode(code);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un producto por ID' })
   @ApiResponse({ status: 200, description: 'Producto encontrado' })

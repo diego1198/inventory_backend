@@ -30,6 +30,9 @@ export class Product {
   @Column('int')
   stock: number;
 
+  @Column('int', { default: 10 })
+  minStock: number;
+
   @Column({ nullable: true })
   code: string;
 

@@ -9,6 +9,8 @@ import { ReportsModule } from './reports/reports.module';
 import { CategoriesModule } from './categories/categories.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { CustomersModule } from './customers/customers.module';
+import { ServicesModule } from './services/services.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { CustomersModule } from './customers/customers.module';
     CategoriesModule,
     InventoryModule,
     CustomersModule,
+    ServicesModule,
+    SettingsModule,
   ],
 })
 export class AppModule { }

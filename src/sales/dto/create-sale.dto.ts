@@ -3,9 +3,15 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSaleItemDto {
-  @ApiProperty({ example: 'product-id-here' })
+  @ApiProperty({ example: 'product-id-here', required: false })
   @IsString()
-  productId: string;
+  @IsOptional()
+  productId?: string;
+
+  @ApiProperty({ example: 'service-id-here', required: false })
+  @IsString()
+  @IsOptional()
+  serviceId?: string;
 
     @ApiProperty({ example: 2 })
     @Type(() => Number)
@@ -30,4 +36,8 @@ export class CreateSaleDto {
   @IsString()
   @IsOptional()
   customerId?: string;
+
+  @ApiProperty({ example: true, description: 'Si se aplica IVA a la venta', required: false })
+  @IsOptional()
+  applyTax?: boolean;
 }

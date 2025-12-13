@@ -41,6 +41,13 @@ export class CreateProductDto {
   @Type(() => Number)
   stock: number;
 
+  @ApiProperty({ example: 10, description: 'Stock mínimo para alertas', required: false })
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  @IsOptional()
+  minStock?: number;
+
   @ApiProperty({ example: 'uuid-de-categoria', description: 'ID de la categoría' })
   @IsString()
   categoryId: string;

@@ -84,4 +84,47 @@ export class ProductsService {
       order: { name: 'ASC' },
     });
   }
+
+  async findByCode(code: string): Promise<Product> {
+    const product = await this.productsRepository.findOne({
+      where: { code, isActive: true },
+      relations: ['category'],
+    });
+
+    if (!product) {
+      throw new NotFoundException('Producto no encontrado con este código');
+    }
+
+    return product;
+  }
+
+  async getLowStockAlerts(): Promise<{
+    lowStockCount: number;
+    outOfStockCount: number;
+    lowStockProducts: Product[];
+    outOfStockProducts: Product[];
+    totalAlerts: number;
+  }> {
+    const products = await this.productsRepository.find({
+      where: { isActive: true },
+      relations: ['category'],
+      order: { stock: 'ASC' },
+    });
+
+    const lowStockProducts = products.filter(
+      (product) => product.stock > 0 && product.stock <= (product.minStock || 10)
+    );
+    
+    const outOfStockProducts = products.filter(
+      (product) => product.stock === 0
+    );
+
+    return {
+      lowStockCount: lowStockProducts.length,
+      outOfStockCount: outOfStockProducts.length,
+      lowStockProducts,
+      outOfStockProducts,
+      totalAlerts: lowStockProducts.length + outOfStockProducts.length,
+    };
+  }
 }

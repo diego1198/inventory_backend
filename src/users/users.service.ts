@@ -83,8 +83,30 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { email } });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(id: string, updateUserDto: UpdateUserDto, updaterUserId?: string, updaterRole?: UserRole): Promise<User> {
     const user = await this.findOne(id);
+
+    // Validar permisos de actualización
+    if (updaterRole && updaterUserId) {
+      // No permitir que un usuario se cambie su propio rol
+      if (id === updaterUserId && updateUserDto.role && updateUserDto.role !== user.role) {
+        throw new ForbiddenException('No puedes cambiar tu propio rol');
+      }
+
+      // ADMIN no puede modificar a otros ADMIN o SUPERADMIN
+      if (updaterRole === UserRole.ADMIN && 
+          (user.role === UserRole.ADMIN || user.role === UserRole.SUPERADMIN) &&
+          id !== updaterUserId) {
+        throw new ForbiddenException('No tienes permisos para modificar a este usuario');
+      }
+
+      // ADMIN no puede asignar rol ADMIN o SUPERADMIN
+      if (updaterRole === UserRole.ADMIN && 
+          updateUserDto.role && 
+          (updateUserDto.role === UserRole.ADMIN || updateUserDto.role === UserRole.SUPERADMIN)) {
+        throw new ForbiddenException('No tienes permisos para asignar este rol');
+      }
+    }
 
     if (updateUserDto.email && updateUserDto.email !== user.email) {
       const existingUser = await this.usersRepository.findOne({
@@ -100,8 +122,27 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, deleterUserId?: string, deleterRole?: UserRole): Promise<void> {
     const user = await this.findOne(id);
+
+    // No permitir eliminar el propio usuario
+    if (deleterUserId && id === deleterUserId) {
+      throw new ForbiddenException('No puedes eliminar tu propia cuenta');
+    }
+
+    // Validar permisos según rol
+    if (deleterRole) {
+      // ADMIN solo puede eliminar CASHIER
+      if (deleterRole === UserRole.ADMIN && user.role !== UserRole.CASHIER) {
+        throw new ForbiddenException('Solo puedes eliminar usuarios con rol Cajero');
+      }
+
+      // Nadie puede eliminar a un SUPERADMIN excepto otro SUPERADMIN
+      if (user.role === UserRole.SUPERADMIN && deleterRole !== UserRole.SUPERADMIN) {
+        throw new ForbiddenException('No tienes permisos para eliminar a un Superadministrador');
+      }
+    }
+
     user.isActive = false;
     await this.usersRepository.save(user);
   }

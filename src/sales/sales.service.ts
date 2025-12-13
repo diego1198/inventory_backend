@@ -5,7 +5,9 @@ import { Sale, SaleStatus } from './entities/sale.entity';
 import { SaleItem } from './entities/sale-item.entity';
 import { Product } from '../products/entities/product.entity';
 import { User } from '../users/entities/user.entity';
+import { Service } from '../services/entities/service.entity';
 import { CreateSaleDto } from './dto/create-sale.dto';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class SalesService {
@@ -16,7 +18,10 @@ export class SalesService {
     private saleItemsRepository: Repository<SaleItem>,
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
+    @InjectRepository(Service)
+    private servicesRepository: Repository<Service>,
     private dataSource: DataSource,
+    private settingsService: SettingsService,
   ) { }
 
   async create(createSaleDto: CreateSaleDto, userId: string): Promise<Sale> {
@@ -33,39 +38,65 @@ export class SalesService {
 
       // Validar stock y calcular totales
       for (const item of createSaleDto.items) {
-        const product = await this.productsRepository.findOne({
-          where: { id: item.productId, isActive: true },
-        });
+        if (item.productId) {
+          const product = await this.productsRepository.findOne({
+            where: { id: item.productId, isActive: true },
+          });
 
-        if (!product) {
-          throw new NotFoundException(`Producto ${item.productId} no encontrado`);
+          if (!product) {
+            throw new NotFoundException(`Producto ${item.productId} no encontrado`);
+          }
+
+          if (product.stock < item.quantity) {
+            throw new BadRequestException(`Stock insuficiente para ${product.name}`);
+          }
+
+          // Actualizar stock
+          product.stock -= item.quantity;
+          await queryRunner.manager.save(product);
+
+          // Crear item de venta
+          const saleItem = this.saleItemsRepository.create({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: product.salePrice,
+            purchasePrice: product.purchasePrice,
+            total: product.salePrice * item.quantity,
+          });
+
+          saleItems.push(saleItem);
+          subtotal += saleItem.total;
+        } else if (item.serviceId) {
+          const service = await this.servicesRepository.findOne({
+            where: { id: item.serviceId, isActive: true },
+          });
+
+          if (!service) {
+            throw new NotFoundException(`Servicio ${item.serviceId} no encontrado`);
+          }
+
+          // Crear item de venta para servicio
+          const saleItem = this.saleItemsRepository.create({
+            serviceId: item.serviceId,
+            quantity: item.quantity,
+            unitPrice: service.price,
+            purchasePrice: 0, // Services usually don't have a direct purchase price in this context, or it's 0
+            total: service.price * item.quantity,
+          });
+
+          saleItems.push(saleItem);
+          subtotal += saleItem.total;
+        } else {
+          throw new BadRequestException('Item must have either productId or serviceId');
         }
-
-        if (product.stock < item.quantity) {
-          throw new BadRequestException(`Stock insuficiente para ${product.name}`);
-        }
-
-        // Actualizar stock
-        product.stock -= item.quantity;
-        await queryRunner.manager.save(product);
-
-        // Crear item de venta
-        const saleItem = this.saleItemsRepository.create({
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: product.salePrice,
-          purchasePrice: product.purchasePrice,
-          total: product.salePrice * item.quantity,
-        });
-
-        saleItems.push(saleItem);
-        subtotal += saleItem.total;
       }
 
-      // Obtener IVA desde variable de entorno o usar 0 si no está definida
-      const ivaRaw = process.env.IVA;
-      const ivaRate = ivaRaw ? parseFloat(ivaRaw) : 0;
-      const tax = subtotal * ivaRate;
+      // Obtener IVA desde la configuración del sistema
+      const ivaRate = await this.settingsService.getIvaRate();
+      
+      // Aplicar IVA solo si applyTax es true (por defecto es true)
+      const shouldApplyTax = createSaleDto.applyTax !== false;
+      const tax = shouldApplyTax ? subtotal * ivaRate : 0;
       const total = subtotal + tax;
 
       // Crear la venta
@@ -78,6 +109,7 @@ export class SalesService {
         customerId: createSaleDto.customerId,
         status: SaleStatus.COMPLETED,
         notes: createSaleDto.notes,
+        applyTax: shouldApplyTax,
       });
 
       const savedSale = await queryRunner.manager.save(sale);
@@ -102,7 +134,7 @@ export class SalesService {
 
   async findAll(): Promise<Sale[]> {
     return this.salesRepository.find({
-      relations: ['user', 'items', 'items.product', 'customer'],
+      relations: ['user', 'items', 'items.product', 'items.service', 'customer'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -110,7 +142,7 @@ export class SalesService {
   async findOne(id: string): Promise<Sale> {
     const sale = await this.salesRepository.findOne({
       where: { id },
-      relations: ['user', 'items', 'items.product', 'customer'],
+      relations: ['user', 'items', 'items.product', 'items.service', 'customer'],
     });
 
     if (!sale) {
@@ -123,7 +155,7 @@ export class SalesService {
   async findByUser(userId: string): Promise<Sale[]> {
     return this.salesRepository.find({
       where: { userId },
-      relations: ['items', 'items.product', 'customer'],
+      relations: ['items', 'items.product', 'items.service', 'customer'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -134,6 +166,7 @@ export class SalesService {
       .leftJoinAndSelect('sale.user', 'user')
       .leftJoinAndSelect('sale.items', 'items')
       .leftJoinAndSelect('items.product', 'product')
+      .leftJoinAndSelect('items.service', 'service')
       .where('sale.createdAt >= :startDate', { startDate })
       .andWhere('sale.createdAt <= :endDate', { endDate })
       .orderBy('sale.createdAt', 'DESC')

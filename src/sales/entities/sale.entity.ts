@@ -26,6 +26,9 @@ export class Sale {
   @Column('decimal', { precision: 10, scale: 2 })
   total: number;
 
+  @Column({ default: true })
+  applyTax: boolean;
+
   @Column({
     type: 'enum',
     enum: SaleStatus,
