@@ -22,13 +22,27 @@ export class UsersService {
       return true;
     }
 
-    // ADMIN can only create CASHIER
-    if (creatorRole === UserRole.ADMIN && targetRole === UserRole.CASHIER) {
+    // ADMIN can create CASHIER and TECHNICIAN
+    if (creatorRole === UserRole.ADMIN && 
+        (targetRole === UserRole.CASHIER || targetRole === UserRole.TECHNICIAN)) {
       return true;
     }
 
-    // CASHIER cannot create any users
+    // CASHIER and TECHNICIAN cannot create any users
     return false;
+  }
+
+  /**
+   * Get users that can be assigned as technicians (CASHIER or TECHNICIAN roles)
+   */
+  async findTechnicians(): Promise<User[]> {
+    return this.usersRepository.find({
+      where: [
+        { role: UserRole.CASHIER, isActive: true },
+        { role: UserRole.TECHNICIAN, isActive: true },
+      ],
+      select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive'],
+    });
   }
 
   async create(createUserDto: CreateUserDto, creatorRole?: UserRole): Promise<User> {

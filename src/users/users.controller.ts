@@ -34,6 +34,14 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get('technicians')
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.CASHIER)
+  @ApiOperation({ summary: 'Obtener usuarios que pueden ser asignados como técnicos' })
+  @ApiResponse({ status: 200, description: 'Lista de técnicos disponibles' })
+  findTechnicians() {
+    return this.usersService.findTechnicians();
+  }
+
   @Get(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Obtener un usuario por ID' })

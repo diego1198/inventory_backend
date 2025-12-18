@@ -11,6 +11,10 @@ import { InventoryModule } from './inventory/inventory.module';
 import { CustomersModule } from './customers/customers.module';
 import { ServicesModule } from './services/services.module';
 import { SettingsModule } from './settings/settings.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
+import { ServiceOrdersModule } from './service-orders/service-orders.module';
+import { RemindersModule } from './reminders/reminders.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -38,6 +42,10 @@ import { SettingsModule } from './settings/settings.module';
     CustomersModule,
     ServicesModule,
     SettingsModule,
+    VehiclesModule,
+    ServiceOrdersModule,
+    RemindersModule,
+    NotificationsModule,
   ],
 })
 export class AppModule { }
